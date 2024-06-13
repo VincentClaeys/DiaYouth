@@ -2,6 +2,7 @@
   "expo": {
     "name": "DiaYouth",
     "slug": "DiaYouth",
+    "description": "DiaYouth is a mobile app that helps you to find other young people with diabetes.",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -15,16 +16,32 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.vincentcl.DiaYouth"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.vincentcl.DiaYouth"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-font"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "89abe843-b28e-40af-a589-4f2960e6ca8e"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/89abe843-b28e-40af-a589-4f2960e6ca8e"
     }
   }
 }
