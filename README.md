@@ -8,6 +8,6 @@ Dit project, ontwikkeld door Vincent Claeys als afstudeerproject voor de richtin
 
 - Vragen stellen en beantwoorden, inclusief AI bot dat zorgt voor extra betrouwbaarheid
 - Aanmaken van en registreren voor activiteiten
- - Peptalk Wall
+ - Peptalk Wall , voorzien van een AI bot die haatberichten en ongepaste content filtert en verwijdert
 
 
