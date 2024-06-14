@@ -18,6 +18,7 @@ import blankProfilePhoto from "../../../../assets/images/blank_profile.jpg";
 import { Entypo, Ionicons } from "@expo/vector-icons";
 import { ImageBackground } from "react-native";
 import { SUPABASE_URL } from "@env";
+import { ScrollView } from "react-native-gesture-handler";
 
 
 import background from "../../../../assets/images/header2.png";
@@ -336,6 +337,11 @@ export default function Profile({ session }) {
   };
 
   return (
+    <ScrollView
+    style={styles.scrollView}
+    contentContainerStyle={styles.contentContainer}
+    showsVerticalScrollIndicator={false}
+  >
     <View style={styles.container}>
       <View style={styles.header}>
         <ImageBackground
@@ -465,6 +471,7 @@ export default function Profile({ session }) {
         </TouchableOpacity>
       </Modal>
     </View>
+    </ScrollView>
   );
 }
 
@@ -472,6 +479,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
+  },
+  scrollView: {
+    flex: 1,
+    backgroundColor: "#fff",
+  },
+  contentContainer: {
+    flexGrow: 1,
+    paddingBottom: 200,
   },
   header: {
     justifyContent: "center",
