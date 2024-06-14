@@ -1,4 +1,3 @@
-// Import React Native components first
 import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { ImageBackground } from "react-native";
@@ -38,10 +37,10 @@ const HomeScreen = () => {
     setUserId(user.id);
 
     const { data: profileData } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single();
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single();
     if (profileData) {
       setUsername(profileData.username);
       setPhoto(profileData.avatar_url);
@@ -49,22 +48,35 @@ const HomeScreen = () => {
   };
 
   // Function to detect changes in the user profile
-  const handleInserts = (payload) => {
-    console.log("Change received!", payload);
-    fetchUsername();
+  const handleProfileChange = (payload) => {
+    console.log("Profile change received!", payload);
+    if (payload.new.id === userId) {
+      fetchUsername();
+    }
   };
 
   useEffect(() => {
     fetchUsername();
-    supabase
-    .channel("profiles")
-    .on(
+    const subscription = supabase
+      .channel("profiles")
+      .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "profiles" },
-        handleInserts
+        { event: "UPDATE", schema: "public", table: "profiles" },
+        handleProfileChange
       )
-    .subscribe();
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
+
+  useEffect(() => {
+    if (userId) {
+      fetchUsername();
+    }
+  }, [userId]);
+
 
   return (
     <ScrollView
