@@ -124,7 +124,7 @@ export default function SettingsPage({ session }) {
         </View>
 
         <CustomButton
-          title="Sign Out"
+          title="Uitloggen"
           onPress={() => supabase.auth.signOut()}
           buttonStyle={styles.signOutButton}
           textStyle={styles.signOutButtonText}

@@ -103,8 +103,14 @@ const AddQuestionSection = () => {
         },
       ]);
       if (error) throw error;
+
       Alert.alert("Jouw vraag en antwoord zijn succesvol doorgestuurd!");
       console.log("Question submitted successfully:", data);
+
+      setQuestion('');
+      setSelectedCategory('');
+      setIsAnonymous(false);
+      setVisible(false);
     } catch (error) {
       console.error("Error submitting question:", error.message);
     }

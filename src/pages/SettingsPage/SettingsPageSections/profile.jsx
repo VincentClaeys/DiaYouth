@@ -1,6 +1,14 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../../utils/supabase";
-import { StyleSheet, View, Alert,Platform, TouchableOpacity, Modal, Image, } from "react-native";
+import {
+  StyleSheet,
+  View,
+  Alert,
+  Platform,
+  TouchableOpacity,
+  Modal,
+  Image,
+} from "react-native";
 import { Button, Text } from "react-native-elements";
 import CustomButton from "../../../components/Button";
 import CustomInput from "../../../components/Inputfield";
@@ -9,12 +17,11 @@ import { useNavigation } from "@react-navigation/native";
 import blankProfilePhoto from "../../../../assets/images/blank_profile.jpg";
 import { Entypo, Ionicons } from "@expo/vector-icons";
 import { ImageBackground } from "react-native";
-import { SUPABASE_URL } from '@env';
+import { SUPABASE_URL } from "@env";
+
 
 import background from "../../../../assets/images/header2.png";
-import * as ImagePicker from 'expo-image-picker'; // Make sure to install expo-image-picker
-
-
+import * as ImagePicker from "expo-image-picker"; // Make sure to install expo-image-picker
 
 export default function Profile({ session }) {
   const [loading, setLoading] = useState(true);
@@ -29,6 +36,7 @@ export default function Profile({ session }) {
   const [eventCategories, setEventCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [image, setImage] = useState(null);
+  const [userId, setUserId] = useState(null);
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
@@ -42,6 +50,8 @@ export default function Profile({ session }) {
         data: { user },
       } = await supabase.auth.getUser();
       setEmail(user.email);
+      setUserId(user.id);
+    
     };
 
     fetchUsername();
@@ -51,7 +61,6 @@ export default function Profile({ session }) {
     navigation.navigate("Profile");
   };
 
-
   const handleInserts = (payload) => {
     console.log("Change received!", payload);
     getProfile();
@@ -59,7 +68,9 @@ export default function Profile({ session }) {
 
   const fetchEventCategories = async () => {
     try {
-      const { data, error } = await supabase.from("event_categories").select("*");
+      const { data, error } = await supabase
+        .from("event_categories")
+        .select("*");
       if (error) {
         throw error;
       }
@@ -87,21 +98,22 @@ export default function Profile({ session }) {
     };
   }, []);
 
-
   async function getProfile() {
     try {
       setLoading(true);
       if (!session?.user) throw new Error("No user on the session!");
-  
+
       const { data, error, status } = await supabase
-      .from("profiles")
-      .select(`username, website, avatar_url, preference_categorie_event, event_categories(*)`)
-      .eq("id", session?.user.id)
-      .single();
-      if (error && status!== 406) {
+        .from("profiles")
+        .select(
+          `username, website, avatar_url, preference_categorie_event, event_categories(*)`
+        )
+        .eq("id", session?.user.id)
+        .single();
+      if (error && status !== 406) {
         throw error;
       }
-  
+
       if (data) {
         setUsername(data.username);
         setWebsite(data.website);
@@ -117,7 +129,6 @@ export default function Profile({ session }) {
       setLoading(false);
     }
   }
-  
 
   async function updateProfile({ username, website, avatar_url }) {
     try {
@@ -212,7 +223,7 @@ export default function Profile({ session }) {
             upsert: false,
           });
 
-          console.log("Supabase upload response:", data);
+        console.log("Supabase upload response:", data);
 
         if (error) {
           console.error("Supabase upload error:", error);
@@ -232,15 +243,13 @@ export default function Profile({ session }) {
     });
   };
 
-
-  async function updateProfilePhoto () {
+  async function updateProfilePhoto() {
     let photoFileName = null;
 
-      if (image) {
-        photoFileName = await handleUploadImage(); // Wait for the image upload to finish
-        console.log("Photo uploaded:", photoFileName);
-      }
-
+    if (image) {
+      photoFileName = await handleUploadImage(); // Wait for the image upload to finish
+      console.log("Photo uploaded:", photoFileName);
+    }
 
     try {
       setLoading(true);
@@ -248,7 +257,7 @@ export default function Profile({ session }) {
 
       const updates = {
         id: session?.user.id, // Make sure to include the user id
-        avatar_url: photoFileName, // Set the new avatar URL  
+        avatar_url: photoFileName, // Set the new avatar URL
       };
 
       const { error } = await supabase.from("profiles").upsert(updates);
@@ -264,7 +273,38 @@ export default function Profile({ session }) {
       setLoading(false);
     }
   }
+// Zorg ervoor dat je Alert importeert
 
+  const handleUpdatePassword = async () => {
+    try {
+      const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: 'https://example.com/update-password',
+      });
+  
+      // Controleer of er geen fouten zijn opgetreden
+      if (error) {
+        console.error('Fout bij het versturen van de reset-link:', error.message);
+        Alert.alert("Fout", "Er is iets misgegaan bij het versturen van de reset-link. Probeer het opnieuw.");
+        return;
+      }
+  
+      // Als alles goed gaat, toon een popup met een succesbericht
+      Alert.alert(
+        "Succes!",
+        "De reset-link is verzonden naar uw e-mail.",
+        [
+          {
+            text: "OK",
+            onPress: () => console.log("OK Pressed"),
+          },
+        ]
+      );
+    } catch (err) {
+      console.error(err);
+      Alert.alert("Fout", "Er is een onverwachte fout opgetreden. Probeer het later opnieuw.");
+    }
+  };
+  
   const renderEventCategories = () => {
     return eventCategories.map((category) => (
       <TouchableOpacity
@@ -276,25 +316,25 @@ export default function Profile({ session }) {
         style={[
           styles.categoryItem,
           {
-            backgroundColor: selectedCategory === category.id ? "#3584FC" : "white",
+            backgroundColor:
+              selectedCategory === category.id ? "#3584FC" : "white",
           },
         ]}
       >
-         <Text
-        style={[
-          styles.categoryText,
-          {
-            color: selectedCategory === category.id ? "white" : "#3584FC",
-          },
-        ]}
-      >
-        {category.name}
-      </Text>
+        <Text
+          style={[
+            styles.categoryText,
+            {
+              color: selectedCategory === category.id ? "white" : "#3584FC",
+            },
+          ]}
+        >
+          {category.name}
+        </Text>
       </TouchableOpacity>
     ));
   };
-  
-  
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -326,7 +366,7 @@ export default function Profile({ session }) {
                 source={
                   avatarUrl
                     ? {
-                        uri:`${SUPABASE_URL}/storage/v1/object/public/${avatarUrl}`,
+                        uri: `${SUPABASE_URL}/storage/v1/object/public/${avatarUrl}`,
                       }
                     : blankProfilePhoto
                 }
@@ -361,16 +401,32 @@ export default function Profile({ session }) {
           </View>
           <View style={styles.accountInput}>
             <Text style={styles.inputfieldsName}>Username</Text>
+    
             <CustomInput
               label="Username"
               value={username || ""}
               onChangeText={(text) => setUsername(text)}
             />
           </View>
+          <View style={styles.accountInput}>
+            <Text style={styles.inputfieldsName}>Wachtwoord reset</Text>
+    
+            <CustomButton
+              title={loading ? "Loading ..." : "Wachtwoord resetlink versturen"}
+              onPress={handleUpdatePassword}
+              buttonStyle={styles.customButtonSendUpdatePasswordLinkButton}
+              textStyle={styles.customButtonSendUpdatePasswordLink}
+              disabled={loading}
+            />
+          </View>
+
+  
           <View style={styles.categoryContainer}>
-          <Text style={styles.inputfieldsName}>Favoriete activiteiten categorie</Text>
-          <View style={styles.categoryList}>{renderEventCategories()}</View>
-        </View>
+            <Text style={styles.inputfieldsName}>
+              Favoriete activiteiten categorie
+            </Text>
+            <View style={styles.categoryList}>{renderEventCategories()}</View>
+          </View>
 
           <View>
             <CustomButton
@@ -382,6 +438,8 @@ export default function Profile({ session }) {
               textStyle={styles.customButtonText}
               disabled={loading}
             />
+
+        
           </View>
         </View>
       </View>
@@ -392,11 +450,16 @@ export default function Profile({ session }) {
         animationType="slide"
         onRequestClose={() => setIsModalVisible(false)}
       >
-        <TouchableOpacity style={styles.modalOverlay} onPress={() => setIsModalVisible(false)}>
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          onPress={() => setIsModalVisible(false)}
+        >
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Selecteer een nieuwe avatar</Text>
             <Button title="Kies een afbeelding" onPress={handleImagePick} />
-            {selectedImage && <Avatar size={100} source={{ uri: selectedImage }} rounded />}
+            {selectedImage && (
+              <Avatar size={100} source={{ uri: selectedImage }} rounded />
+            )}
             <Button title="Upload" onPress={updateProfilePhoto} />
           </View>
         </TouchableOpacity>
@@ -509,10 +572,24 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     backgroundColor: "#3584fc",
   },
+
   customButtonText: {
     color: "white",
     fontSize: 12,
   },
+  customButtonSendUpdatePasswordLinkButton: {
+
+alignItems:"flex-start"
+  },
+  customButtonSendUpdatePasswordLink : {
+    color: "#3584fc",
+    fontSize: 12,
+  },
+  customButtonTextDelete: {
+    color: "red",
+    fontSize: 12,
+  },
+
   editIconContainer: {
     position: "absolute",
     right: 0,
@@ -523,16 +600,16 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalContent: {
     width: 300,
     padding: 20,
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 10,
-    alignItems: 'center',
+    alignItems: "center",
   },
   modalTitle: {
     fontSize: 20,
@@ -546,8 +623,7 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     marginTop: 10,
   },
-  categoryText  
-  : {
+  categoryText: {
     fontFamily: "AvenirNext-Bold",
     fontSize: 12,
     fontWeight: "600",
