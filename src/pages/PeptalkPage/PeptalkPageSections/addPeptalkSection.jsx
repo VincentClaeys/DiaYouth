@@ -9,18 +9,18 @@ import { FontAwesome } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import axios from 'axios';
 
-const PeptalkSectionHomescreen = () => {
+const AddPeptalkSection = () => {
   const [userId, setUserId] = useState("");
   const [quote, setQuote] = useState("");
 
   const navigation = useNavigation();
 
-  //  code for navigating to the peptalk wall
+  // Function to navigate to the peptalk wall
   const navigateToPeptalkWall = () => {
     navigation.navigate("PepTalk");
   };
 
-  // code for fetching the logged in user
+  // Effect hook to fetch the logged-in user
   useEffect(() => {
     const fetchUsername = async () => {
       try {
@@ -42,7 +42,7 @@ const PeptalkSectionHomescreen = () => {
     fetchUsername();
   }, []);
 
-  // code for submitting the quote or peptalk
+  // Function to submit the quote or peptalk
   async function submitQuotes(quote) {
     try {
       const chatGptOptions = {
@@ -82,8 +82,8 @@ const PeptalkSectionHomescreen = () => {
       }
 
       const { data, error } = await supabase
-        .from("quotes")
-        .insert([{ quote, user_id: userId }]);
+       .from("quotes")
+       .insert([{ quote, user_id: userId }]);
       if (error) throw error;
       Alert.alert("Bedankt voor jouw peptalk!");
       console.log("Quote submitted successfully:", data);
@@ -135,8 +135,6 @@ const PeptalkSectionHomescreen = () => {
 };
 
 const styles = StyleSheet.create({
-  // styles for the pepTalk container en content
-
   pepTalkContainer: {
     marginTop: 40,
     display: "flex",
@@ -154,7 +152,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 5,
   },
-
   pepTalkText: {
     fontFamily: "AvenirNext-Bold",
     color: "#213658",
@@ -163,7 +160,7 @@ const styles = StyleSheet.create({
   },
   pepTalkDescription: {
     fontFamily: "AvenirNext-Bold",
-    color: "#213658", // donkerblauw -- Subkleur (voor tekst)
+    color: "#213658",
     fontSize: 11,
     fontWeight: "400",
   },
@@ -191,4 +188,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default PeptalkSectionHomescreen;
+export default AddPeptalkSection;

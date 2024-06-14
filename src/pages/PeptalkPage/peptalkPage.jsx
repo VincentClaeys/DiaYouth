@@ -1,38 +1,27 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet } from "react-native";
-import { supabase } from "../../utils/supabase";
-import { useNavigation } from "@react-navigation/native";
-import background from "../../../assets/images/header2.png";
+// Import React
+import React from "react";
+
+// Import components and utilities from react-native
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { ImageBackground } from "react-native";
-import { ScrollView } from "react-native-gesture-handler";
+import { useNavigation } from "@react-navigation/native";
+
+// Import images and icons
+import background from "../../../assets/images/header2.png";
 import { Fontisto } from "@expo/vector-icons";
+
+// Import sections of the Peptalk page
 import AllPeptalksSection from "./PeptalkPageSections/allPeptalksSection";
-import AddPeptalksSection from "./PeptalkPageSections/addPeptalkSection";
-import QuotesComponent from "./PeptalkPageSections/test";
+import AddPeptalkSection from "./PeptalkPageSections/addPeptalkSection";
 
 const PepTalkPage = () => {
-  const [userId, setUserId] = useState("");
-  const [quote, setQuote] = useState("");
+
   const navigation = useNavigation();
 
-
+  // Navigate to the likes page
   const navigateToProfileLikes = () => {
     navigation.navigate('PeptalkLikes');
   };
-
-
-
-  useEffect(() => {
-    const fetchUsername = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      setUserId(user.id);
-    };
-
-    fetchUsername();
-  }, []);
-
 
   return (
     <ScrollView
@@ -40,65 +29,58 @@ const PepTalkPage = () => {
       contentContainerStyle={styles.contentContainer}
       showsVerticalScrollIndicator={false}
     >
+      {/* Header section */}
       <View style={styles.header}>
         <ImageBackground
           source={background}
           style={styles.backgroundImage}
         ></ImageBackground>
+        
+        {/* Welcome text and like button */}
         <View style={styles.welcomeContentContainer}>
           <View style={styles.welcomeTextContainer}>
             <Text style={styles.welcomeText}>Peptalk-wall</Text>
             <Text style={styles.welcomeTextDescription}>
-              Deel een quote, net zoals we cola delen.
+            Deel een quote, net zoals we cola delen.
             </Text>
           </View>
+          
+          {/* Like button */}
           <Fontisto
             onPress={navigateToProfileLikes}
-            style={styles.peptalkLike}
+            style={styles.peptalkLikeIcon}
             name="heart"
             size={30}
             color="white"
           />
         </View>
-      
+
+        {/* Peptalk content */}
         <View style={styles.peptalkContentContainer}>
-          <AddPeptalksSection />
+          <AddPeptalkSection />
           <AllPeptalksSection />
-          {/* <QuotesComponent /> */}
-
-
-    
-    
         </View>
       </View>
     </ScrollView>
   );
 };
+
+// Styles
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-    alignItems: "center",
-  },
   scrollView: {
     flex: 1,
     backgroundColor: "#fff",
   },
   contentContainer: {
     flexGrow: 1,
-    paddingBottom: 200, 
+    paddingBottom: 200,
   },
-
-
-  // styles for the header container
-
   header: {
     justifyContent: "center",
     alignItems: "center",
   },
   backgroundImage: {
     height: 800,
-
     position: "absolute",
     top: -440,
     left: -200,
@@ -112,7 +94,6 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
   },
-
   welcomeContentContainer: {
     display: "flex",
     flexDirection: "row",
@@ -129,28 +110,23 @@ const styles = StyleSheet.create({
   },
   welcomeText: {
     fontFamily: "AvenirNext-Bold",
-    color: "#3584fc", // lichtblauw -- Hoofdkleur
+    color: "#3584fc",
     fontSize: 30,
-    
   },
   welcomeTextDescription: {
     fontFamily: "AvenirNext-Bold",
-    color: "#213658", // donkerblauw -- Subkleur (voor tekst)
+    color: "#213658",
     fontSize: 12,
     fontWeight: "400",
     marginBottom: 5,
   },
-  peptalkLike: {
+  peptalkLikeIcon: {
     marginRight: 5,
     marginBottom: 15,
   },
-
-  // styles for the pepTalk container en content
-
   peptalkContentContainer: {
     width: "90%",
   },
-
 });
 
 export default PepTalkPage;

@@ -10,91 +10,75 @@ const EventSectionHomescreen = () => {
   const [events, setEvents] = useState([]);
   const navigation = useNavigation();
   const [userId, setUserId] = useState("");
-  const [likedQuestions, setLikedQuestions] = useState([]);
+  const [likedevents, setLikedEvents] = useState([]);
 
+  // Navigation functions
+  const navigateToAlleEvents = () => navigation.navigate("Events");
+  const navigateToEventDetail = (event) => navigation.navigate("EventDetail", { event });
 
-  const navigateToAlleEvents = () => {
-    navigation.navigate("Events");
-  };
-
-  const navigateToEventDetail = (event) => {
-    navigation.navigate("EventDetail", { event });
-  };
-
+  // Fetches user ID and liked questions
   useEffect(() => {
-    fetchEvents();
     fetchUsername();
+    fetchEvents();
   }, []);
+
   const fetchUsername = async () => {
     try {
-      const {
-        data: { user },
-        error,
-      } = await supabase.auth.getUser();
-      if (error) {
-        throw error;
-      }
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error) throw error;
       if (user) {
         setUserId(user.id);
-        console.log("userId", user.id);
-        fetchLikedQuestions(user.id);
+        fetchLikedEvents(user.id);
       }
     } catch (error) {
       console.error("Error fetching user:", error.message);
     }
   };
 
+  // Toggles like status for an event
   const toggleLike = async (event) => {
     const { data, error } = await supabase
      .from("likes_event")
      .select("id")
      .eq("user_id", userId)
      .eq("event_id", event.id);
-  
+
     if (error) {
       console.error("Error fetching likes:", error);
       return;
     }
-  
+
     let operationSuccessful = false;
-  
+
     if (data.length > 0) {
-      // Unlike the question
+      // Unlike the event
       const { error: unlikeError } = await supabase
        .from("likes_event")
        .delete()
        .eq("user_id", userId)
        .eq("event_id", event.id);
-  
-      if (!unlikeError) {
-        operationSuccessful = true;
-      } else {
-        console.error("Error unliking question:", unlikeError);
-      }
+
+      if (!unlikeError) operationSuccessful = true;
+      else console.error("Error unliking event:", unlikeError);
     } else {
-      // Like the question
+      // Like the event
       const { error: likeError } = await supabase
        .from("likes_event")
        .insert([{ user_id: userId, event_id: event.id }]);
-  
-      if (!likeError) {
-        operationSuccessful = true;
-      } else {
-        console.error("Error liking question:", likeError);
-      }
-    }
-  
-    if (operationSuccessful) {
-      fetchLikedQuestions(userId);
-    }
-  };
-  
 
-  const fetchLikedQuestions = async (userId) => {
+      if (!likeError) operationSuccessful = true;
+      else console.error("Error liking event:", likeError);
+    }
+
+    if (operationSuccessful) fetchLikedEvents(userId);
+  };
+
+  // Fetches liked questions based on user ID
+  const fetchLikedEvents = async (userId) => {
     const { data, error } = await supabase
-      .from("likes_event")
-      .select("event_id")
-      .eq("user_id", userId);
+     .from("likes_event")
+     .select("event_id")
+     .eq("user_id", userId);
 
     if (error) {
       console.error("Error fetching liked questions:", error);
@@ -102,133 +86,114 @@ const EventSectionHomescreen = () => {
     }
 
     const likedQuestionIds = data.map((like) => like.event_id);
-    setLikedQuestions(likedQuestionIds);
+    setLikedEvents(likedQuestionIds);
     console.log("Liked questions fetched successfully:", likedQuestionIds);
   };
 
+  // Helper function to reverse date format
   const reverseDate = (dateString) => {
     const [year, month, day] = dateString.split("-");
     return `${day}-${month}-${year}`;
   };
 
+  // Helper function to format time
   const formatTime = (timeString) => {
     const [hours, minutes] = timeString.split(":");
     return `${hours}u${minutes}`;
   };
 
+  // Fetches events from Supabase
   const fetchEvents = async () => {
     try {
       const { data, error } = await supabase
-        .from("events")
-        .select("* , event_categories(*), profiles(*)")
-        .order("date", { ascending: true })
-        .limit(3);
-      if (error) {
-        throw error;
-      }
+       .from("events")
+       .select("*, event_categories(*), profiles(*)")
+       .order("date", { ascending: true })
+       .limit(3);
+
+      if (error) throw error;
       setEvents(data);
       console.log("Events fetched successfully:", data);
     } catch (error) {
       console.error("Error fetching events:", error.message);
     }
+   
   };
-  const handleInsertsEvents = (payload) => {
-    console.log("ts vnan da!", payload);
 
-    fetchEvents(); 
+  // Handles new inserts in the events table
+  const handleInsertsEvents = () => {
+    fetchEvents();
+
   };
+
+  // Subscribes to changes in the likes_event table
+  useEffect(() => {
+    supabase
+     .channel("likes_event")
+     .on("postgres_changes", { event: "*", schema: "public", table: "likes_event" }, handleInsertsEvents)
+     .subscribe();
+  }, [userId]);
 
   useEffect(() => {
     supabase
-      .channel("events")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "events" },
-        handleInsertsEvents
-      )
-      .subscribe();
-  });
-  const handleInserts = (payload) => {
-    console.log("ts vnan da!", payload);
+     .channel("events")
+     .on("postgres_changes", { event: "*", schema: "public", table: "events" }, handleInsertsEvents)
+     .subscribe();
+  }, [userId]);
 
-    fetchLikedQuestions(userId);
 
-  };
-  useEffect(() => {
-    supabase
-      .channel("likes_event")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "likes_event" },
-        handleInserts
-      )
-      .subscribe();
-    }, [userId]);
-
+  // Renders the event section
   return (
     <View style={styles.eventsContainer}>
+      {/* Event section header */}
       <View style={styles.eventsContentContainer}>
         <View>
           <View style={styles.eventsContentTitle}>
-
-          <MaterialIcons style={styles.eventsIcon} name="event" size={20} color="#213658" />
+            <MaterialIcons style={styles.eventsIcon} name="event" size={20} color="#213658" />
             <Text style={styles.eventsText}>Activiteiten</Text>
           </View>
         </View>
-        <Text style={styles.eventsDescription} onPress={navigateToAlleEvents}>
-          Bekijk alles
-        </Text>
+        <Text style={styles.eventsDescription} onPress={navigateToAlleEvents}>Bekijk alles</Text>
       </View>
 
+      {/* Event list */}
       <View style={styles.eventsListContainer}>
         {events.map((event) => (
           <TouchableOpacity
-          key={event.id}
-          style={styles.eventCard}
-          onPress={() => navigateToEventDetail(event)}
-        >
-          <View style={styles.imageContainer}>
-            <Image
-              source={
-                event.photo
-                  ? { uri: `${SUPABASE_URL}/storage/v1/object/public/${event.photo}` }
-                  : run
-              }
-              style={styles.eventImage}
-            />
-             
-          </View>
-          <View style={styles.content}>
-            <View style={styles.contentLeft}>
-              <View style={styles.contentLeftHeading}>
-                <Text style={styles.eventName}>{event.name}</Text>
-                <View style={styles.categoryBadge}>
-                  <Text style={styles.categoryName}>{event.event_categories.name}</Text>
-                </View>
-              </View>
-              <View style={styles.moreContent}>
-                <View style={styles.dateBlock}>
-                  <AntDesign name="calendar" size={14} color="black" />
-                  <Text style={styles.eventDate}>{reverseDate(event.date)}</Text>
-                </View>
-                <View style={styles.locationBlock}>
-                  <EvilIcons name="location" size={14} color="black" />
-                  <Text style={styles.eventLocation}>{event.location}</Text>
-                </View>
-              </View>
-            </View>
-            <TouchableOpacity
-            style={styles.likeIcon}
-            onPress={() => toggleLike(event)}
+            key={event.id}
+            style={styles.eventCard}
+            onPress={() => navigateToEventDetail(event)}
           >
-            {likedQuestions.includes(event.id) ? (
-              <AntDesign name="heart" size={20} color="#213658" />
-            ) : (
-              <AntDesign name="hearto" size={20} color="#213658" />
-            )}
+            <View style={styles.imageContainer}>
+              <Image
+                source={event.photo? { uri: `${SUPABASE_URL}/storage/v1/object/public/${event.photo}` } : run}
+                style={styles.eventImage}
+              />
+            </View>
+            <View style={styles.content}>
+              <View style={styles.contentLeft}>
+                <View style={styles.contentLeftHeading}>
+                  <Text style={styles.eventName}>{event.name}</Text>
+                  <View style={styles.categoryBadge}>
+                    <Text style={styles.categoryName}>{event.event_categories.name}</Text>
+                  </View>
+                </View>
+                <View style={styles.moreContent}>
+                  <View style={styles.dateBlock}>
+                    <AntDesign name="calendar" size={14} color="black" />
+                    <Text style={styles.eventDate}>{reverseDate(event.date)}</Text>
+                  </View>
+                  <View style={styles.locationBlock}>
+                    <EvilIcons name="location" size={14} color="black" />
+                    <Text style={styles.eventLocation}>{event.location}</Text>
+                  </View>
+                </View>
+              </View>
+              <TouchableOpacity style={styles.likeIcon} onPress={() => toggleLike(event)}>
+                {likedevents.includes(event.id)? <AntDesign name="heart" size={20} color="#213658" /> : <AntDesign name="hearto" size={20} color="#213658" />}
+              </TouchableOpacity>
+            </View>
           </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
         ))}
       </View>
     </View>

@@ -1,3 +1,4 @@
+// Import necessary modules and components
 import React, { useState, useEffect } from "react";
 import { supabase } from "../../../utils/supabase";
 import {
@@ -24,14 +25,16 @@ import { ActivityIndicator } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import CustomButton from "../../../components/Button";
 
+// Define categories with IDs
 const categoriesWithIds = [
   { id: 1, name: "Sport" },
-  { id: 2, name: "Sociaal" },
-  { id: 3, name: "Educatie" },
+  { id: 2, name: "Social" },
+  { id: 3, name: "Education" },
   { id: 4, name: "Algemeen" },
 ];
 
 const AddNewEventSection = () => {
+  // State variables for form inputs and UI states
   const [visible, setVisible] = useState(false);
   const [userId, setUserId] = useState("");
   const [eventName, setEventName] = useState("");
@@ -48,6 +51,7 @@ const AddNewEventSection = () => {
 
   const [step, setStep] = useState(1);
 
+  // Function to open image library and select an image
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -56,14 +60,13 @@ const AddNewEventSection = () => {
       quality: 1,
     });
 
-    console.log("Image picker result:", result);
-
     if (!result.cancelled && result.assets && result.assets.length > 0) {
       const uri = result.assets[0].uri;
       setImage(uri);
-      console.log("Image URI set:", uri);
     }
   };
+
+  // Function to upload the selected image to Supabase storage
   const uploadImage = () => {
     return new Promise(async (resolve, reject) => {
       try {
@@ -71,7 +74,7 @@ const AddNewEventSection = () => {
 
         if (!image) {
           console.error("No image selected");
-          resolve(null); // Resolve promise early if no image is selected
+          resolve(null);
           return;
         }
 
@@ -81,28 +84,21 @@ const AddNewEventSection = () => {
         }
 
         const blob = await response.blob();
-        console.log("Image blob:", blob);
-
-        if (!blob) {
-          throw new Error("Failed to create blob from image");
-        }
 
         const fileExt = image.split(".").pop();
         const fileName = `${Math.random()}.${fileExt}`;
         const filePath = `${fileName}`;
 
-        console.log("Uploading image to path:", filePath);
-
         const formData = new FormData();
         formData.append("file", {
           name: fileName,
           type: "image/jpeg",
-          uri: Platform.OS === "android" ? image : image.replace("file://", ""),
+          uri: Platform.OS === "android"? image : image.replace("file://", ""),
         });
 
         const { data, error } = await supabase.storage
-          .from("test")
-          .upload(filePath, formData, {
+         .from("test")
+         .upload(filePath, formData, {
             contentType: "image/jpeg",
             cacheControl: "3600",
             upsert: false,
@@ -110,21 +106,21 @@ const AddNewEventSection = () => {
 
         if (error) {
           console.error("Supabase upload error:", error);
-          reject(error); // Reject promise if there was an error
+          reject(error);
           return;
         }
 
-        // Return the photo filename instead of setting the state
-        resolve(data.fullPath); // This will be the full path of the uploaded image
+        resolve(data.fullPath);
       } catch (error) {
         console.error("Error uploading image:", error.message);
-        reject(error); // Reject promise if there was an error
+        reject(error);
       } finally {
         setUploading(false);
       }
     });
   };
 
+  // Handlers for date and time pickers
   const onChangeDate = (event, selectedDate) => {
     const currentDate = selectedDate || date;
     setShowDatePicker(Platform.OS === "ios");
@@ -137,14 +133,13 @@ const AddNewEventSection = () => {
     setTime(currentTime);
   };
 
+  // Toggle visibility of the modal
   const toggleDialog = () => setVisible(!visible);
 
+  // Fetch current user details
   const fetchUser = async () => {
     try {
-      const {
-        data: { user },
-        error,
-      } = await supabase.auth.getUser();
+      const { data: { user }, error } = await supabase.auth.getUser();
       if (error) throw error;
       if (user) setUserId(user.id);
     } catch (error) {
@@ -156,6 +151,7 @@ const AddNewEventSection = () => {
     fetchUser();
   }, []);
 
+  // Format time to HH:mm:ss
   const formatTime = (date) => {
     const hours = String(date.getHours()).padStart(2, "0");
     const minutes = String(date.getMinutes()).padStart(2, "0");
@@ -163,14 +159,14 @@ const AddNewEventSection = () => {
     return `${hours}:${minutes}:${seconds}`;
   };
 
+  // Submit event function
   const submitEvent = async () => {
     try {
       const formattedTime = formatTime(time);
       let photoFileName = null;
 
       if (image) {
-        photoFileName = await uploadImage(); // Wait for the image upload to finish
-        console.log("Photo uploaded:", photoFileName);
+        photoFileName = await uploadImage();
       }
 
       const { data, error } = await supabase.from("events").insert([
@@ -182,23 +178,36 @@ const AddNewEventSection = () => {
           start_time: formattedTime,
           name: eventName,
           location: location,
-          photo: photoFileName, // Use the photoFileName returned by uploadImage
+          photo: photoFileName,
         },
       ]);
+
       if (error) throw error;
-      Alert.alert("Jouw evenement is succesvol doorgestuurd!");
+      Alert.alert("Your event has been successfully sent!");
       console.log("Event submitted successfully:", data);
+      setEventName('');
+      setDescription('');
+      setLocation('');
+      setImage(null); // Assuming this clears the image preview
+      setSelectedCategoryId(0); // Reset category selection
+      setDate(new Date()); // Reset date and time pickers
+      setTime(new Date());
+      setVisible(false); // Close the modal
+
     } catch (error) {
       console.error("Error submitting event:", error.message);
     }
   };
 
+  // Handle category selection
   const handleCategorySelect = (categoryId) => {
     setSelectedCategoryId(categoryId);
   };
 
+  // Render component
   return (
     <View style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
         <View>
           <View style={styles.headerTitle}>
@@ -209,7 +218,6 @@ const AddNewEventSection = () => {
             Twijfel niet en organiseer zelf een activiteit.
           </Text>
         </View>
-
         <View style={styles.iconContainer}>
           <Ionicons
             onPress={toggleDialog}
@@ -219,23 +227,27 @@ const AddNewEventSection = () => {
           />
         </View>
       </View>
+      {/* Modal */}
       <Modal visible={visible} transparent={true} animationType="slide">
         <TouchableWithoutFeedback onPress={toggleDialog}>
           <View style={styles.modalOverlay}>
             <KeyboardAvoidingView
               style={styles.modalContainer}
-              behavior={Platform.OS === "ios" ? "padding" : "height"}
+              behavior={Platform.OS === "ios"? "padding" : "height"}
             >
               <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
                 <View style={styles.modalContent}>
+                  {/* Step 1: Event Details */}
                   {step === 1 && (
                     <View>
+                      {/* Event Title */}
                       <Text style={styles.modalTitle}>
                         Maak een nieuwe activiteit!
                       </Text>
                       <Text style={styles.modalDescription}>
                         Vul de volgende gegevens in.
                       </Text>
+                      {/* Event Name Input */}
                       <Text style={styles.inputLabel}>
                         Naam van de activiteit
                       </Text>
@@ -245,6 +257,7 @@ const AddNewEventSection = () => {
                         value={eventName}
                         onChangeText={setEventName}
                       />
+                      {/* Description Input */}
                       <Text style={styles.inputLabel}>
                         Omschrijving van de activiteit
                       </Text>
@@ -255,6 +268,7 @@ const AddNewEventSection = () => {
                         onChangeText={setDescription}
                         multiline
                       />
+                      {/* Location Input */}
                       <Text style={styles.inputLabel}>Locatie</Text>
                       <TextInput
                         placeholder="Geef een locatie"
@@ -262,9 +276,7 @@ const AddNewEventSection = () => {
                         value={location}
                         onChangeText={setLocation}
                       />
-                      <Text style={styles.inputLabel}>
-                        Datum en startuur van de activiteit
-                      </Text>
+                      {/* Date and Time Picker */}
                       <View style={styles.dateTimePickerContainer}>
                         {showDatePicker && (
                           <DateTimePicker
@@ -287,7 +299,7 @@ const AddNewEventSection = () => {
                           />
                         )}
                       </View>
-
+                      {/* Next Button */}
                       <CustomButton
                         textStyle={styles.customButtonText}
                         buttonStyle={styles.customButton}
@@ -296,8 +308,10 @@ const AddNewEventSection = () => {
                       />
                     </View>
                   )}
+                  {/* Step 2: Category and Photo Selection */}
                   {step === 2 && (
                     <View>
+                      {/* Category Selection */}
                       <Text style={styles.modalTitle}>
                         Kies een categorie en foto
                       </Text>
@@ -327,7 +341,7 @@ const AddNewEventSection = () => {
                           </TouchableOpacity>
                         ))}
                       </View>
-
+                      {/* Photo Upload */}
                       <View style={styles.uploadPhotoContainer}>
                         <MaterialIcons
                           onPress={pickImage}
@@ -339,11 +353,11 @@ const AddNewEventSection = () => {
                           Upload een passende foto
                         </Text>
                       </View>
-
+                      {/* Display Selected Photo */}
                       {image && (
                         <Image source={{ uri: image }} style={styles.image} />
                       )}
-
+                      {/* Submit Button */}
                       <TouchableOpacity
                         style={[
                           styles.submitButton,
@@ -357,7 +371,7 @@ const AddNewEventSection = () => {
                       >
                         <Text style={styles.submitButtonText}>Verstuur</Text>
                       </TouchableOpacity>
-
+                      {/* Back Button */}
                       <CustomButton
                         textStyle={styles.customButtonTextGoBack}
                         title="Terug naar vorige stap"

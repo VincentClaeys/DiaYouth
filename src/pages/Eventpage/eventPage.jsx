@@ -1,35 +1,27 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, ScrollView, ImageBackground } from "react-native";
 import { supabase } from "../../utils/supabase";
 import { useNavigation } from "@react-navigation/native";
 import background from "../../../assets/images/header2.png";
-import { ImageBackground } from "react-native";
-import { ScrollView } from "react-native-gesture-handler";
 import { MaterialIcons } from "@expo/vector-icons";
 
-// imports of the components
-import SearchEventSection from "./EventPageSections/searchEventSection";
+// Components
 import PopulairEventsSection from "./EventPageSections/populairEventsSection";
 import AllEventsSection from "./EventPageSections/allEventsSection";
-import UploadPhoto from "./EventPageSections/uploadPhoto";
-import ImageItem from "./EventPageSections/viewPhoto";
 import AddNewEventSection from "./EventPageSections/addNewEvent";
 
 
 const EventPage = () => {
   const [userId, setUserId] = useState("");
-  const [quote, setQuote] = useState("");
   const navigation = useNavigation();
 
-  const navigateToEventLikes = () => {
-    navigation.navigate("EventLikes");
-  };
+  // Navigate to Event Likes screen
+  const navigateToEventLikes = () => navigation.navigate("EventLikes");
 
+  // Fetch current user's ID
   useEffect(() => {
     const fetchUsername = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       setUserId(user.id);
     };
 
@@ -46,21 +38,19 @@ const EventPage = () => {
         <ImageBackground
           source={background}
           style={styles.backgroundImage}
-        ></ImageBackground>
+        />
         <View style={styles.pageHeader}>
           <View style={styles.pageTitleContainer}>
             <Text style={styles.pageTitle}>Activiteiten</Text>
             <Text style={styles.pageSubtitle}>Prik de saaie momenten weg!</Text>
           </View>
-          <MaterialIcons style={styles.eventsIcon} name="event" onPress={navigateToEventLikes} size={30}color="white" />
+          <MaterialIcons style={styles.eventsIcon} name="event" onPress={navigateToEventLikes} size={30} color="white" />
         </View>
         <View style={styles.eventContentContainer}>
-            {/* <SearchEventSection /> */}
+
             <AddNewEventSection />
             <PopulairEventsSection />
-           
             <AllEventsSection />
-     
         </View>
       </View>
     </ScrollView>
@@ -68,7 +58,6 @@ const EventPage = () => {
 };
 
 const styles = StyleSheet.create({
-  // ... (other styles)
   container: {
     flex: 1,
     backgroundColor: "#fff",
@@ -82,7 +71,6 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingBottom: 200,
   },
-  // Updated styles for the header container
   header: {
     justifyContent: "center",
     alignItems: "center",
@@ -122,19 +110,19 @@ const styles = StyleSheet.create({
   },
   pageTitle: {
     fontFamily: "AvenirNext-Bold",
-    color: "#3584fc", // lichtblauw -- Hoofdkleur
+    color: "#3584fc", // Light blue -- Main color
     fontSize: 30,
   },
   pageSubtitle: {
     fontFamily: "AvenirNext-Bold",
-    color: "#213658", // donkerblauw -- Subkleur (voor tekst)
+    color: "#213658", // Dark blue -- Sub-color (for text)
     fontSize: 12,
     fontWeight: "400",
     marginBottom: 5,
   },
   eventContentContainer: {
     width: "90%",
-    // Add any additional styles for your event content
+    // Additional styles for event content can be added here
   },
 });
 

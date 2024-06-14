@@ -44,7 +44,7 @@ const AllCategoriesEvents = ({ onSelectCategory }) => {
         style={[
           styles.categoryCard,
           { backgroundColor: color },
-          isSelected && styles.selectedCategoryCard
+          isSelected && styles.selectedCategoryCard,
         ]}
       >
         <Text style={styles.categoryName}>{name}</Text>

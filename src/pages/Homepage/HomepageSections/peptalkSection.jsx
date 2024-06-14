@@ -1,14 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, TextInput } from "react-native";
 import { supabase } from "../../../utils/supabase";
-import { TextInput } from "react-native-gesture-handler";
 import { Alert } from "react-native";
-import { AntDesign } from "@expo/vector-icons";
-import { FontAwesome5 } from "@expo/vector-icons";
-import { FontAwesome } from "@expo/vector-icons";
+import { AntDesign, FontAwesome, FontAwesome5 } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-
-
 
 const PeptalkSectionHomescreen = () => {
   const [userId, setUserId] = useState("");
@@ -16,108 +11,90 @@ const PeptalkSectionHomescreen = () => {
 
   const navigation = useNavigation();
 
-//  code for navigating to the peptalk wall
+  // Function to navigate to the PepTalk wall
   const navigateToPeptalkWall = () => {
     navigation.navigate('PepTalk');
   }
 
-  // code for fetching the logged in user
+  // Effect hook to fetch the logged-in user
   useEffect(() => {
     const fetchUsername = async () => {
       try {
-        const {
-          data: { user },
-          error,
-        } = await supabase.auth.getUser();
-        if (error) {
-          throw error;
-        }
-        if (user) {
-          setUserId(user.id);
-        }
+        const { data: { user }, error } = await supabase.auth.getUser();
+        if (error) throw error;
+        if (user) setUserId(user.id);
       } catch (error) {
         console.error("Error fetching user:", error.message);
       }
     };
-  
     fetchUsername();
   }, []);
 
-  // code for submitting the quote or peptalk
+  // Async function to submit the quote or peptalk
   async function submitQuotes(quote) {
     try {
       const { data, error } = await supabase
-        .from("quotes")
-        .insert([{ quote, user_id: userId }]);
+      .from("quotes")
+      .insert([{ quote, user_id: userId }]);
       if (error) throw error;
-      Alert.alert("Bedankt voor jouw peptalk! Net als insuline kunnen we dit goed gebruiken :)!");
-      console.log("Quote submitted successfully:", data);
+      Alert.alert("Dank je wel voor je peptalk Net als insuline kunnen we dit echt goed gebruiken :)!");
+      console.log("peptalk verzonden succesvol:", data);
+      setQuote("");
     } catch (error) {
-      console.error("Error submitting quote:", error.message);
+      console.error("Fout bij het verzenden van het citaat:", error.message);
     }
   }
 
   return (
-    
-
-
-        <View style={styles.pepTalkContainer}>
-          <View style={styles.pepTalkContentContainer}>
-            <View>
-              <View style={styles.pepTalkContentTitle}>
-                <FontAwesome5 name="hands-helping" size={20} color="#213658" /> 
-                 <Text style={styles.pepTalkText}>Peptalk</Text> 
-              </View> 
-
-              <Text style={styles.pepTalkDescription}>
-                Naast suiker geeft ook jouw peptalk energie!
-              </Text>
-            </View>
-            <View style={styles.iconContainer}>
-      <AntDesign 
-        onPress={navigateToPeptalkWall} 
-        name="arrowright" 
-        size={24} 
-        color="#3584FC" 
-      />
-    </View>
-          </View>
-
-          <View style={styles.pepTalkInputContainer}>
-            <TextInput
-              placeholder="Stuur jouw peptalk door!"
-              style={styles.inputPepTalk}
-              value={quote}
-              onChangeText={(text) => setQuote(text)}
-            />
-            <TouchableOpacity
-              style={[
-                styles.btnNormal,
-                quote.trim().length === 0 && styles.disabledButton,
-              ]}
-              onPress={() => quote.trim().length > 0 && submitQuotes(quote)}
-              disabled={quote.trim().length === 0}
-            >
-              <FontAwesome
-                style={{ marginLeft: -40 }}
-                name="send"
-                size={20}
-                color="#3584fc"
-              />
-            </TouchableOpacity>
-          </View>
+    <View style={styles.pepTalkContainer}>
+      <View style={styles.pepTalkContentContainer}>
+        <View>
+          <View style={styles.pepTalkContentTitle}>
+            <FontAwesome5 name="hands-helping" size={20} color="#213658" /> 
+            <Text style={styles.pepTalkText}>Peptalk</Text> 
+          </View> 
+          <Text style={styles.pepTalkDescription}>
+            Naast suiker geeft ook jouw peptalk energie!
+          </Text>
         </View>
-   
+        <View style={styles.iconContainer}>
+          <AntDesign 
+            onPress={navigateToPeptalkWall} 
+            name="arrowright" 
+            size={24} 
+            color="#3584FC" 
+          />
+        </View>
+      </View>
 
-      
-
+      <View style={styles.pepTalkInputContainer}>
+        <TextInput
+          placeholder="Stuur jouw peptalk door!"
+          style={styles.inputPepTalk}
+          value={quote}
+          onChangeText={(text) => setQuote(text)}
+        />
+        <TouchableOpacity
+          style={[
+            styles.btnNormal,
+            quote.trim().length === 0 && styles.disabledButton,
+          ]}
+          onPress={() => quote.trim().length > 0 && submitQuotes(quote)}
+          disabled={quote.trim().length === 0}
+        >
+          <FontAwesome
+            style={{ marginLeft: -40 }}
+            name="send"
+            size={20}
+            color="#3584fc"
+          />
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  
-  // styles for the pepTalk container en content
-
   pepTalkContainer: {
     marginTop: 40,
     display: "flex",
@@ -135,16 +112,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 5,
   },
-
   pepTalkText: {
     fontFamily: "AvenirNext-Bold",
     color: "#213658",
     fontSize: 20,
-   marginLeft: 10,
+    marginLeft: 10,
   },
   pepTalkDescription: {
     fontFamily: "AvenirNext-Bold",
-    color: "#213658", // donkerblauw -- Subkleur (voor tekst)
+    color: "#213658", // Donkerblauw -- Subkleur (voor tekst)
     fontSize: 11,
     fontWeight: "400",
   },

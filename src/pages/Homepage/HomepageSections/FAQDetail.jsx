@@ -8,6 +8,8 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
+
+// FAQ data array
 const faqData = [
   {
     id: "1",
@@ -45,12 +47,15 @@ const FAQDetail = () => {
   const navigation = useNavigation();
   const [expandedItem, setExpandedItem] = useState(null);
 
+
+  // Function to toggle the expansion of a FAQ item
   const toggleExpand = (id) => {
     setExpandedItem((prevExpandedItem) =>
       prevExpandedItem === id ? null : id
     );
   };
 
+  // Function to navigate back to the Home screen
   const navigateHome = () => {
     navigation.navigate("Home");
   };
@@ -95,15 +100,16 @@ const FAQDetail = () => {
               </View>
             )}
           />
-                <View style={styles.disclaimerContainer}>
-          <Text style={styles.disclaimerText}>
-            Deze antwoorden zijn gecontroleerd en beantwoord door experts en mensen met ervaring. Bij DiaYouth staan we voor correcte informatie en ondersteuning. Raadpleeg altijd een medisch professional voor persoonlijk advies.
-          </Text>
+          <View style={styles.disclaimerContainer}>
+            <Text style={styles.disclaimerText}>
+              Deze antwoorden zijn gecontroleerd en beantwoord door experts en
+              mensen met ervaring. Bij DiaYouth staan we voor correcte
+              informatie en ondersteuning. Raadpleeg altijd een medisch
+              professional voor persoonlijk advies.
+            </Text>
+          </View>
         </View>
-        </View>
-    
       </View>
-
     </View>
   );
 };
@@ -117,7 +123,6 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     marginTop: 40,
-
   },
   contentHeading: {
     marginBottom: 40,
@@ -164,7 +169,6 @@ const styles = StyleSheet.create({
     borderColor: "#ddd",
     position: "absolute",
     bottom: 20,
-
   },
   disclaimerText: {
     fontSize: 12,

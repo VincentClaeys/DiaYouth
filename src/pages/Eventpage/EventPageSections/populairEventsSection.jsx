@@ -1,12 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  Image,
-} from "react-native";
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image } from "react-native";
 import run from "../../../../assets/images/run.jpg";
 import { MaterialIcons } from "@expo/vector-icons";
 import { AntDesign, EvilIcons } from "@expo/vector-icons";
@@ -15,11 +8,12 @@ import { useNavigation } from "@react-navigation/native";
 import { SUPABASE_URL } from "@env";
 import { FontAwesome } from "@expo/vector-icons";
 import { Fontisto } from "@expo/vector-icons";
+import AllEventsSection from "./allEventsSection";
 
 const PopulairEventsSection = () => {
   const [events, setEvents] = useState([]);
   const [userId, setUserId] = useState("");
-  const [likedQuestions, setLikedQuestions] = useState([]);
+  const [likedEvents, setLikedEvents] = useState([]);
   const [userPreferenceCategory, setUserPreferenceCategory] = useState("");
   const navigation = useNavigation();
 
@@ -39,18 +33,13 @@ const PopulairEventsSection = () => {
 
   const fetchUsername = async () => {
     try {
-      const {
-        data: { user },
-        error,
-      } = await supabase.auth.getUser();
-      if (error) {
-        throw error;
-      }
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error) throw error;
       if (user) {
         setUserId(user.id);
         console.log("userId", user.id);
         fetchUserPreferenceCategory(user.id);
-        fetchLikedQuestions(user.id);
+        fetchLikedEvents(user.id); // Renamed from fetchLikedQuestions to align with event context
       }
     } catch (error) {
       console.error("Error fetching user:", error.message);
@@ -60,14 +49,12 @@ const PopulairEventsSection = () => {
   const fetchUserPreferenceCategory = async (userId) => {
     try {
       const { data: userData, error: userError } = await supabase
-        .from("profiles")
-        .select("preference_categorie_event")
-        .eq("id", userId)
-        .single();
+    .from("profiles")
+    .select("preference_categorie_event")
+    .eq("id", userId)
+    .single();
 
-      if (userError) {
-        throw userError;
-      }
+      if (userError) throw userError;
 
       setUserPreferenceCategory(userData.preference_categorie_event);
       console.log(
@@ -89,14 +76,12 @@ const PopulairEventsSection = () => {
   const fetchEvents = async () => {
     try {
       const { data: eventData, error: eventError } = await supabase
-        .from("events")
-        .select("* , event_categories(*), profiles (*)")
-        .eq("event_categorie", userPreferenceCategory) // Filter events op basis van de gebruikersvoorkeurscategorie
-        .order("date", { ascending: false })
-        .limit(3);
-      if (eventError) {
-        throw eventError;
-      }
+    .from("events")
+    .select("*, event_categories(*), profiles(*)")
+    .eq("event_categorie", userPreferenceCategory)
+    .order("date", { ascending: false })
+    .limit(3);
+      if (eventError) throw eventError;
       setEvents(eventData);
       console.log("Events fetched successfully:", eventData);
     } catch (error) {
@@ -108,101 +93,101 @@ const PopulairEventsSection = () => {
     navigation.navigate("EventDetail", { event });
   };
 
-  const fetchLikedQuestions = async (userId) => {
+  const fetchLikedEvents = async (userId) => {
     const { data, error } = await supabase
-      .from("likes_event")
-      .select("event_id")
-      .eq("user_id", userId);
+  .from("likes_event")
+  .select("event_id")
+  .eq("user_id", userId);
 
     if (error) {
-      console.error("Error fetching liked questions:", error);
+      console.error("Error fetching liked events:", error);
       return;
     }
 
-    const likedQuestionIds = data.map((like) => like.event_id);
-    setLikedQuestions(likedQuestionIds);
-    console.log("Liked questions fetched successfully:", likedQuestionIds);
+    const likedEventIds = data.map((like) => like.event_id);
+    setLikedEvents(likedEventIds);
+    console.log("Liked events fetched successfully:", likedEventIds);
   };
 
   const handleInserts = (payload) => {
-    console.log("ts vnan da!", payload);
+    console.log("Payload received:", payload);
 
-    fetchLikedQuestions(userId);
-    fetchEvents(); 
+    fetchLikedEvents(userId);
+    fetchEvents();
   };
-  const handleInsertsEvents = (payload) => {
-    console.log("ts vnan da!", payload);
 
-    fetchEvents(); 
+  const handleInsertsEvents = (payload) => {
+    console.log("Payload received:", payload);
+
+    fetchEvents();
   };
 
   useEffect(() => {
     supabase
-      .channel("likes_event")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "likes_event" },
-        handleInserts
-      )
-      .subscribe();
+  .channel("likes_event")
+  .on(
+       "postgres_changes",
+       { event: "*", schema: "public", table: "likes_event" },
+       handleInserts
+     )
+  .subscribe();
   }, [userId]);
 
   useEffect(() => {
     supabase
-      .channel("events")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "events" },
-        handleInsertsEvents
-      )
-      .subscribe();
+  .channel("events")
+  .on(
+       "postgres_changes",
+       { event: "*", schema: "public", table: "events" },
+       handleInsertsEvents
+     )
+  .subscribe();
   });
 
   const toggleLike = async (event) => {
     const { data, error } = await supabase
-     .from("likes_event")
-     .select("id")
-     .eq("user_id", userId)
-     .eq("event_id", event.id);
-  
+  .from("likes_event")
+  .select("id")
+  .eq("user_id", userId)
+  .eq("event_id", event.id);
+
     if (error) {
       console.error("Error fetching likes:", error);
       return;
     }
-  
+
     let operationSuccessful = false;
-  
+
     if (data.length > 0) {
-      // Unlike the question
+      // Unlikes the event
       const { error: unlikeError } = await supabase
-       .from("likes_event")
-       .delete()
-       .eq("user_id", userId)
-       .eq("event_id", event.id);
-  
+    .from("likes_event")
+  .delete()
+  .eq("user_id", userId)
+  .eq("event_id", event.id);
+
       if (!unlikeError) {
         operationSuccessful = true;
       } else {
-        console.error("Error unliking question:", unlikeError);
+        console.error("Error unliking event:", unlikeError);
       }
     } else {
-      // Like the question
+      // Likes the event
       const { error: likeError } = await supabase
-       .from("likes_event")
-       .insert([{ user_id: userId, event_id: event.id }]);
-  
+    .from("likes_event")
+  .insert([{ user_id: userId, event_id: event.id }]);
+
       if (!likeError) {
         operationSuccessful = true;
       } else {
-        console.error("Error liking question:", likeError);
+        console.error("Error liking event:", likeError);
       }
     }
-  
+
     if (operationSuccessful) {
-      fetchLikedQuestions(userId);
+      fetchLikedEvents(userId);
     }
   };
-  
 
   const EventCard = ({ event, onPress }) => {
     return (
@@ -211,10 +196,10 @@ const PopulairEventsSection = () => {
           <Image
             source={
               event.photo
-                ? {
+             ? {
                     uri: `${SUPABASE_URL}/storage/v1/object/public/${event.photo}`,
                   }
-                : run // Default image if photo is not available
+                : run
             }
             style={styles.eventImage}
           />
@@ -223,7 +208,7 @@ const PopulairEventsSection = () => {
             style={styles.likeIcon}
             onPress={() => toggleLike(event)}
           >
-            {likedQuestions.includes(event.id) ? (
+            {likedEvents.includes(event.id)? (
               <AntDesign name="heart" size={20} color="#213658" />
             ) : (
               <AntDesign name="hearto" size={20} color="#213658" />
@@ -254,7 +239,9 @@ const PopulairEventsSection = () => {
 
   return (
     <View style={styles.container}>
+     
       <View style={styles.eventsSection}>
+    
         <View style={styles.eventContentContainer}>
           <Text style={styles.title}>Speciaal voor jou</Text>
         </View>
@@ -273,7 +260,9 @@ const PopulairEventsSection = () => {
           />
         </View>
       </View>
+
     </View>
+
   );
 };
 
@@ -288,10 +277,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     color: "#213658",
     paddingHorizontal: 10,
-  },
-
-  contentInfo: {
-    marginTop: 10,
   },
   eventCard: {
     margin: 7,
@@ -373,5 +358,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 });
+
 
 export default PopulairEventsSection;

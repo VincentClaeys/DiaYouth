@@ -1,13 +1,17 @@
-import React from "react";
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Modal } from "react-native";
+// Import React Native components first
+import React, { useState } from "react";
+import { View, Text, FlatList, StyleSheet, TouchableOpacity } from "react-native";
+import { Image } from "react-native-elements";
+
+// Import specific components and utilities next
 import { useNavigation } from "@react-navigation/native";
-import { useState } from "react";
+
+// Import images
 import backgroundFAQ from "../../../../assets/images/FAQ.png";
 import backgroundQuestions from "../../../../assets/images/asking.png";
 import backgroundNewUser from "../../../../assets/images/NewUser.png";
-import { Image } from "react-native-elements";
 
-const QuestionsSection = () => {
+const PopulairSectionHomescreen = () => {
   const navigation = useNavigation();
   const [categories, setCategories] = useState([
     {
@@ -33,12 +37,14 @@ const QuestionsSection = () => {
     },
   ]);
 
+  // Define actions for each category card
   const cardActions = {
     "1": () => navigation.navigate("Questions"),
     "2": () => navigation.navigate("FAQDetail"),
     "3": () => navigation.navigate("NewUserDetail"), 
   };
 
+  // Function to get image wrapper style based on category ID
   const getImageWrapperStyle = (id) => {
     switch(id) {
       case "1":
@@ -52,6 +58,7 @@ const QuestionsSection = () => {
     }
   };
 
+  // Component to render each category card
   const RenderCard = ({ item }) => (
     <TouchableOpacity onPress={cardActions[item.id]}>
       <View style={[styles.cardContainer, { backgroundColor: item.color }]}>
@@ -67,11 +74,11 @@ const QuestionsSection = () => {
   );
 
   return (
-    <View style={styles.pepTalkContainer}>
-      <View style={styles.questionContentTitle}>
-        <Text style={styles.questionText}>Populair</Text>
+    <View style={styles.sectionContainer}>
+      <View style={styles.sectionTitle}>
+        <Text style={styles.sectionHeaderText}>Populair</Text>
       </View>
-      <View style={styles.questionsSection}>
+      <View style={styles.cardsContainer}>
         <FlatList
           data={categories}
           horizontal
@@ -85,7 +92,7 @@ const QuestionsSection = () => {
 };
 
 const styles = StyleSheet.create({
-  pepTalkContainer: {
+  sectionContainer: {
     marginTop: 40,
     display: "flex",
     flexDirection: "column",
@@ -130,22 +137,21 @@ const styles = StyleSheet.create({
     color: "#3584FC",
     width: 100,
   },
-  questionContentTitle: {
+  sectionTitle: {
     display: "flex",
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 5,
   },
-  questionText: {
+  sectionHeaderText: {
     fontFamily: "AvenirNext-Bold",
     color: "#213658",
     fontSize: 20,
   },
-  questionsSection: {
+  cardsContainer: {
     marginTop: 10,
     height: 230,
   },
- 
 });
 
-export default QuestionsSection;
+export default PopulairSectionHomescreen;

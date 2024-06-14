@@ -1,9 +1,15 @@
+// Import React and hooks
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+
+// Import components and utilities from react-native
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+
+// Import Supabase client
 import { supabase } from "../../../utils/supabase";
+
+// Import icons
 import { FontAwesome } from "@expo/vector-icons";
 import { Fontisto } from "@expo/vector-icons";
-import { AntDesign } from "@expo/vector-icons";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 const AllPeptalkSection = () => {
@@ -11,54 +17,35 @@ const AllPeptalkSection = () => {
   const [likedPeptalks, setLikedPeptalks] = useState([]);
   const [userId, setUserId] = useState("");
 
+  // Fetch liked peptalks when userId changes
   useEffect(() => {
     if (userId) {
       fetchLikedPeptalks();
     }
   }, [userId]);
-  
+
+  // Function to fetch liked peptalks
   const fetchLikedPeptalks = async () => {
     if (!userId) {
-      return; // Stop de functie als userId leeg is
+      return; // Stop the function if userId is empty
     }
     
     const { data, error } = await supabase
-      .from("likes")
-      .select("quote_id")
-      .eq("user_id", userId);
+    .from("likes")
+    .select("quote_id")
+    .eq("user_id", userId);
   
     if (error) {
-      console.error("Fout bij het ophalen van geliked peptalks:", error);
+      console.error("Error fetching liked peptalks:", error);
       return;
     }
   
-    // Convert de quote_ids naar een array van peptalk IDs
+    // Convert quote_ids to an array of peptalk IDs
     const likedPeptalkIds = data.map((like) => like.quote_id);
     setLikedPeptalks(likedPeptalkIds);
   };
-  
-  
-  // const fetchLikedPeptalks = async () => {
-  //   const { data, error } = await supabase
-  //     .from("likes")
-  //     .select("quote_id")
-  //     .eq("user_id", userId);
 
-  //   if (error) {
-  //     console.error("Fout bij het ophalen van geliked peptalks:", error);
-  //     return;
-  //   }
-
-  //   // Convert de quote_ids naar een array van peptalk IDs
-  //   const likedPeptalkIds = data.map((like) => like.quote_id);
-  //   setLikedPeptalks(likedPeptalkIds);
-  // };
-
-  // useEffect(() => {
-  //   if (userId) {
-  //     fetchLikedPeptalks();
-  //   }
-  // }, [userId]);
+  // Fetch username when the component loads
   useEffect(() => {
     const fetchUsername = async () => {
       try {
@@ -80,10 +67,11 @@ const AllPeptalkSection = () => {
     fetchUsername();
   }, []);
 
+  // Function to fetch all peptalks
   const fetchPeptalks = async () => {
     const { data, error } = await supabase
-      .from("quotes")
-      .select("quote,user_id,id,profiles ( id, username )");
+    .from("quotes")
+    .select("quote,user_id,id,profiles ( id, username )");
 
     if (error) {
       console.error("Error fetching peptalks:", error);
@@ -93,81 +81,85 @@ const AllPeptalkSection = () => {
     return data;
   };
 
+  // Function to update likes
   const handleInsertsLikes = (payload) => {
-    
     fetchLikedPeptalks();
-    console.log("Change is verander!", payload);
-
-
+    console.log("Change detected!", payload);
   };
 
+  // Function to update peptalks
   const handleInserts = (payload) => {
     console.log("Change received!", payload);
     fetchPeptalks().then((fetchedPeptalks) => setPeptalks(fetchedPeptalks));
   };
   
+  // Subscribe to changes in the quotes table
   useEffect(() => {
     fetchPeptalks().then((fetchedPeptalks) => setPeptalks(fetchedPeptalks));
     supabase
-      .channel("quotes")
-      .on(
+    .channel("quotes")
+    .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "quotes" },
         handleInserts
       )
-      .subscribe();
+    .subscribe();
   }, []);
+  // Subscribe to changes in the likes table
   useEffect(() => {
     supabase
-      .channel("likes")
-      .on(
+    .channel("likes")
+    .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "likes" },
         handleInsertsLikes
       )
-      .subscribe();
+    .subscribe();
   }, []);
 
+  // Function to select a random color
   const colors = [ "#EDF6F9" ];
   const getRandomColor = () => {
     const randomIndex = Math.floor(Math.random() * colors.length);
     return colors[randomIndex];
   };
 
+  // Function to like or unlike a peptalk
   async function like(peptalk) {
     const { data, error } = await supabase
-     .from("likes")
-     .select("id")
-     .eq("user_id", userId)
-     .eq("quote_id", peptalk.id);
+   .from("likes")
+   .select("id")
+   .eq("user_id", userId)
+   .eq("quote_id", peptalk.id);
   
     if (error) {
-      console.error("Fout bij het ophalen van likes:", error);
+      console.error("Error fetching likes:", error);
       return;
     }
   
     if (data.length > 0) {
-      // Unlike de peptalk
+      // Unlike the peptalk
       await supabase
-       .from("likes")
-       .delete()
-       .eq("user_id", userId)
-       .eq("quote_id", peptalk.id);
-      setLikedPeptalks(likedPeptalks.filter((id) => id !== peptalk.id));
+     .from("likes")
+     .delete()
+     .eq("user_id", userId)
+     .eq("quote_id", peptalk.id);
+      setLikedPeptalks(likedPeptalks.filter((id) => id!== peptalk.id));
     } else {
-      // Like de peptalk
+      // Like the peptalk
       await supabase
-       .from("likes")
-       .insert([{ user_id: userId, quote_id: peptalk.id }]);
+     .from("likes")
+     .insert([{ user_id: userId, quote_id: peptalk.id }]);
       setLikedPeptalks([...likedPeptalks, peptalk.id]);
     }
   }
 
+  // Function to delete a peptalk
   async function deletePeptalk(peptalkId) {
     const { error } = await supabase
-      .from("quotes")
-      .delete()
-      .eq("id", peptalkId);
+    .from("quotes")
+    .delete()
+    .eq("id", peptalkId);
 
     if (error) {
       console.error("Error deleting peptalk:", error);
@@ -211,8 +203,13 @@ const AllPeptalkSection = () => {
                   />
                 )}
                 {peptalk.user_id === userId && (
-           
-                  <MaterialCommunityIcons   onPress={() => deletePeptalk(peptalk.id)}       style={styles.deleteBtn} name="delete" size={22} color="red" />
+                  <MaterialCommunityIcons
+                    onPress={() => deletePeptalk(peptalk.id)}
+                    style={styles.deleteBtn}
+                    name="delete"
+                    size={22}
+                    color="red"
+                  />
                 )}
               </View>
             </View>
@@ -223,6 +220,7 @@ const AllPeptalkSection = () => {
   );
 };
 
+// Styles
 const styles = StyleSheet.create({
   allPeptalksContainer: {
     marginTop: 40,
@@ -249,22 +247,19 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
   },
-
   bottomPeptalkContent: {
     display: "flex",
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
-
   iconContainer: {
     flexDirection: "row",
     alignItems: "center",
   },
-
   allPeptalksText: {
     fontFamily: "AvenirNext-Regular",
-    color: "#213658", // donkerblauw -- Subkleur (voor tekst)
+    color: "#213658",
     fontSize: 11,
     fontWeight: "400",
     padding: 10,
@@ -272,7 +267,7 @@ const styles = StyleSheet.create({
   },
   allPeptalksUsername: {
     fontFamily: "AvenirNext-Bold",
-    color: "#213658", //
+    color: "#213658",
     fontSize: 10,
     fontWeight: "700",
     padding: 10,
@@ -281,7 +276,7 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   deleteBtn: {
-paddingRight  : 10,
+    paddingRight: 10,
   },
 });
 

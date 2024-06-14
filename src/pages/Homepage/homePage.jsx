@@ -1,17 +1,22 @@
+// Import React Native components first
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet } from "react-native";
-import { supabase } from "../../utils/supabase";
-import { Alert } from "react-native";
+import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { ImageBackground } from "react-native";
-import background from "../../../assets/images/header2.png";
 import { Avatar } from "react-native-elements";
-import PeptalkSectionHomescreen from "./HomepageSections/peptalkSection";
-import QuestionsSectionHomescreen from "./HomepageSections/questionSection";
-import EventSectionHomescreen from "./HomepageSections/eventSection";
-import { ScrollView } from "react-native-gesture-handler";
-import blankProfilePhoto from "../../../assets/images/blank_profile.jpg";
+
+// Then import specific components and utilities
+import { supabase } from "../../utils/supabase";
 import { useNavigation } from "@react-navigation/native";
 import { SUPABASE_URL } from "@env";
+
+// Import images
+import background from "../../../assets/images/header2.png";
+import blankProfilePhoto from "../../../assets/images/blank_profile.jpg";
+
+// Import sections of the homepage
+import PeptalkSectionHomescreen from "./HomepageSections/peptalkSection";
+import PopulairSectionHomescreen from "./HomepageSections/populairSection";
+import EventSectionHomescreen from "./HomepageSections/eventSection";
 
 const HomeScreen = () => {
   const [userId, setUserId] = useState("");
@@ -20,13 +25,12 @@ const HomeScreen = () => {
 
   const navigation = useNavigation();
 
-  //  code for navigating to the peptalk wall
-    const navigateToAccount = () => {
-      navigation.navigate('Account');
-    }
+  // Function to navigate to the account screen
+  const navigateToAccount = () => {
+    navigation.navigate('Account');
+  };
 
-  // code for fetching the username
-
+  // Function to fetch the username
   const fetchUsername = async () => {
     const {
       data: { user },
@@ -34,17 +38,17 @@ const HomeScreen = () => {
     setUserId(user.id);
 
     const { data: profileData } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .single();
+    .from("profiles")
+    .select("*")
+    .eq("id", user.id)
+    .single();
     if (profileData) {
       setUsername(profileData.username);
       setPhoto(profileData.avatar_url);
     }
   };
 
-  // code for checking if the user has been updated and change the username if so
+  // Function to detect changes in the user profile
   const handleInserts = (payload) => {
     console.log("Change received!", payload);
     fetchUsername();
@@ -53,13 +57,13 @@ const HomeScreen = () => {
   useEffect(() => {
     fetchUsername();
     supabase
-      .channel("profiles")
-      .on(
+    .channel("profiles")
+    .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "profiles" },
         handleInserts
       )
-      .subscribe();
+    .subscribe();
   }, []);
 
   return (
@@ -68,7 +72,7 @@ const HomeScreen = () => {
       contentContainerStyle={styles.contentContainer}
       showsVerticalScrollIndicator={false}
     >
-      <View style={styles.container}>
+      <View style={styles.mainContainer}>
         <View style={styles.header}>
           <ImageBackground
             source={background}
@@ -85,7 +89,7 @@ const HomeScreen = () => {
               rounded
               source={
                 photo
-                  ? {
+                ? {
                       uri: `${SUPABASE_URL}/storage/v1/object/public/${photo}`,
                     }
                   : blankProfilePhoto // Default image if photo is not available
@@ -96,7 +100,7 @@ const HomeScreen = () => {
 
         <View style={styles.homePageContentContainer}>
           <PeptalkSectionHomescreen />
-          <QuestionsSectionHomescreen />
+          <PopulairSectionHomescreen />
           <EventSectionHomescreen />
         </View>
       </View>
@@ -105,8 +109,7 @@ const HomeScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  // the whole container of the homepage
-  container: {
+  mainContainer: {
     flex: 1,
     backgroundColor: "#fff",
     alignItems: "center",
@@ -120,14 +123,12 @@ const styles = StyleSheet.create({
     paddingBottom: 200,
   },
 
-  // styles for the header container
   header: {
     justifyContent: "center",
     alignItems: "center",
   },
   backgroundImage: {
     height: 800,
-
     position: "absolute",
     top: -440,
     left: -200,
@@ -158,18 +159,16 @@ const styles = StyleSheet.create({
   },
   welcomeText: {
     fontFamily: "AvenirNext-Bold",
-    color: "#3584fc", // lichtblauw -- Hoofdkleur
+    color: "#3584fc", // Light blue primary color
     fontSize: 30,
   },
   welcomeTextDescription: {
     fontFamily: "AvenirNext-Bold",
-    color: "#213658", // donkerblauw -- Subkleur (voor tekst)
+    color: "#213658", // Dark blue secondary color for text
     fontSize: 12,
     fontWeight: "400",
     marginBottom: 5,
   },
-
-  // styles for the homepage content container
 
   homePageContentContainer: {
     width: "90%",

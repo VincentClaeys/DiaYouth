@@ -25,16 +25,21 @@ const AllEventsSection = () => {
   const [filteredEvents, setFilteredEvents] = useState([]);
   const [hasAppliedFilters, setHasAppliedFilters] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
-  const [likedQuestions, setLikedQuestions] = useState([]);
+  const [likedEvents, setLikedEvents] = useState([]);
   const [userId, setUserId] = useState("");
   const [filters, setFilters] = useState({ categories: [] });
 
   const navigation = useNavigation();
-
   useEffect(() => {
     fetchEvents();
     fetchUsername();
+    const { eventChannel, likesChannel } = setupRealtime();
+
+    return () => {
+      cleanupRealtime(eventChannel, likesChannel);
+    };
   }, []);
+
 
   const fetchUsername = async () => {
     try {
@@ -44,7 +49,7 @@ const AllEventsSection = () => {
       } = await supabase.auth.getUser();
       if (error) throw error;
       if (user) {
-        fetchLikedQuestions(user.id);
+        fetchLikedEvents(user.id); // Renamed to reflect event context
         setUserId(user.id);
       }
     } catch (error) {
@@ -52,17 +57,17 @@ const AllEventsSection = () => {
     }
   };
 
-  const fetchLikedQuestions = async (userId) => {
+  const fetchLikedEvents = async (userId) => { // Renamed for clarity
     const { data, error } = await supabase
-      .from("likes_event")
-      .select("event_id")
-      .eq("user_id", userId);
+    .from("likes_event") // Assuming this table now tracks event likes instead of questions
+    .select("event_id")
+    .eq("user_id", userId);
     if (error) {
-      console.error("Error fetching liked questions:", error);
+      console.error("Error fetching liked events:", error);
       return;
     }
-    const likedQuestionIds = data.map((like) => like.event_id);
-    setLikedQuestions(likedQuestionIds);
+    const likedEventIds = data.map((like) => like.event_id);
+    setLikedEvents(likedEventIds); // Updated variable name for consistency
     return Promise.resolve();
   };
 
@@ -74,8 +79,8 @@ const AllEventsSection = () => {
   const fetchEvents = async () => {
     try {
       const { data, error } = await supabase
-        .from("events")
-        .select("* , event_categories(*), profiles(*)");
+      .from("events")
+      .select("*, event_categories(*), profiles(*)"); // Ensure this query aligns with your database structure
       if (error) throw error;
       setEvents(data);
     } catch (error) {
@@ -83,22 +88,7 @@ const AllEventsSection = () => {
     }
   };
 
-  const handleInsertsEvents = (payload) => {
-    fetchEvents();
-  };
-
-  useEffect(() => {
-    supabase
-      .channel("events")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "events" },
-        handleInsertsEvents
-      )
-      .subscribe();
-  });
-
-  const applyFilters = () => {
+  const handleApplyFilters = () => { // Renamed for clarity
     let filtered = [...events];
     if (filters.categories.length > 0) {
       filtered = filtered.filter((event) =>
@@ -109,29 +99,29 @@ const AllEventsSection = () => {
     setHasAppliedFilters(true);
   };
 
-  const clearFilters = () => {
+  const handleClearFilters = () => { // Renamed for clarity
     setFilters({ categories: [] });
     setHasAppliedFilters(false);
     setFilteredEvents([]);
   };
 
-  const toggleModal = () => {
+  const toggleFilterModal = () => { // Renamed for clarity
     setModalVisible(!modalVisible);
   };
 
-  const navigateToEventDetail = (event) => {
+  const navigateToEventDetails = (event) => { // Renamed for clarity
     navigation.navigate("EventDetail", { event });
   };
-  const navigateToEventUpdate = (event) => {
+  const navigateToEventUpdate = (event) => { // Renamed for clarity
     navigation.navigate("EventUpdate", { event });
   };
 
-  const toggleLike = async (event) => {
+  const toggleEventLike = async (event) => { // Renamed for clarity
     const { data, error } = await supabase
-      .from("likes_event")
-      .select("id")
-      .eq("user_id", userId)
-      .eq("event_id", event.id);
+    .from("likes_event")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("event_id", event.id);
     if (error) {
       console.error("Error fetching likes:", error);
       return;
@@ -141,62 +131,135 @@ const AllEventsSection = () => {
 
     if (data.length > 0) {
       const { error: unlikeError } = await supabase
-        .from("likes_event")
-        .delete()
-        .eq("user_id", userId)
-        .eq("event_id", event.id);
+      .from("likes_event")
+      .delete()
+      .eq("user_id", userId)
+      .eq("event_id", event.id);
       if (!unlikeError) {
         operationSuccessful = true;
       } else {
-        console.error("Error unliking question:", unlikeError);
+        console.error("Error unliking event:", unlikeError);
       }
     } else {
       const { error: likeError } = await supabase
-        .from("likes_event")
-        .insert([{ user_id: userId, event_id: event.id }]);
+      .from("likes_event")
+      .insert([{ user_id: userId, event_id: event.id }]);
       if (!likeError) {
         operationSuccessful = true;
       } else {
-        console.error("Error liking question:", likeError);
+        console.error("Error liking event:", likeError);
       }
     }
 
     if (operationSuccessful) {
-      fetchLikedQuestions(userId);
+      fetchLikedEvents(userId); // Use the renamed function
     }
   };
 
-  const handleInserts = (payload) => {
-    fetchLikedQuestions(userId).then(() => {
-      fetchEvents();
-    });
-  };
+  // const handleEventUpdates = (payload) => { // Renamed for clarity
+  //   console.log("This function has been changed.");
+  //   fetchLikedEvents(userId).then(() => {
+  //     fetchEvents();
+  //   });
+  // };
 
-  useEffect(() => {
-    const channel = supabase
-      .channel("likes_event")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "likes_event" },
-        handleInserts
-      )
-      .subscribe();
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [userId]);
+  // const handleEvent = (payload) => { // Renamed for clarity
+  //   console.log("This function has been changed.");
+  //     fetchEvents();
+   
+  // };
+
+  // useEffect(() => {
+  //   supabase
+  //   .channel('events')
+  //   .on(
+  //     'postgres_changes',
+  //     {
+  //       event: '*',
+  //       schema: 'public',
+  //       table: "events"
+  //     },
+  //     handleEvent,
+  //     (payload) => console.log(payload)
+  //   )
+  //   .subscribe()
+  // });
+
+
+  // useEffect(() => {
+  //   const channel = supabase
+  //   .channel("likes_event")
+  //   .on(
+  //       "postgres_changes",
+  //       { event: "*", schema: "public", table: "likes_event" },
+  //       handleEventUpdates // Renamed for clarity
+  //     )
+  //   .subscribe();
+  //   return () => {
+  //     supabase.removeChannel(channel);
+  //   };
+  // }, [userId]);
+
+  const channel = supabase
+  .channel('schema-db-changes')
+  .on(
+    'postgres_changes',
+    {
+      event: '*',
+      schema: 'public',
+      table: "events"
+
+    },
+    (payload) => console.log(payload)
+  )
+  .subscribe()
 
   const deleteEvent = async (eventId) => {
     try {
       const { error } = await supabase
-        .from("events")
-        .delete()
-        .eq("id", eventId);
+      .from("events")
+      .delete()
+      .eq("id", eventId);
       if (error) throw error;
       fetchEvents(); // Refresh the events list
     } catch (error) {
       console.error("Error deleting event:", error.message);
     }
+  };
+  const setupRealtime = () => {
+    console.log("Setting up real-time subscription...");
+
+    const eventChannel = supabase
+      .channel("schema-db-changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "events" },
+        (payload) => {
+          console.log("Real-time event payload:", payload);
+          fetchEvents();
+        }
+      )
+      .subscribe();
+
+    const likesChannel = supabase
+      .channel("likes_event")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "likes_event" },
+        (payload) => {
+          console.log("Real-time likes payload:", payload);
+          fetchLikedEvents(userId);
+        }
+      )
+      .subscribe();
+
+    return { eventChannel, likesChannel };
+  };
+  const cleanupRealtime = () => {
+    console.log("Cleaning up real-time subscription...");
+    const { eventChannel, likesChannel } = setupRealtime();
+    supabase.removeChannel(eventChannel);
+    supabase.removeChannel(likesChannel);
   };
 
   return (
@@ -207,12 +270,12 @@ const AllEventsSection = () => {
             <Text style={styles.headerText}>Ontdek</Text>
           </View>
           <Text style={styles.headerDescription}>
-            Omdat zelfs je glucose van gezelligheid houdt!
+          Omdat zelfs je glucose van gezelligheid houdt!
           </Text>
         </View>
         <View style={styles.iconContainer}>
           <Ionicons
-            onPress={toggleModal}
+            onPress={toggleFilterModal}
             name="filter-circle"
             size={30}
             color="#3584FC"
@@ -221,37 +284,37 @@ const AllEventsSection = () => {
       </View>
 
       <Modal visible={modalVisible} transparent={true} animationType="slide">
-        <TouchableWithoutFeedback onPress={toggleModal}>
+        <TouchableWithoutFeedback onPress={toggleFilterModal}>
           <View style={styles.modalOverlay}>
             <KeyboardAvoidingView
               style={styles.modalContainer}
-              behavior={Platform.OS === "ios" ? "padding" : "height"}
+              behavior={Platform.OS === "ios"? "padding" : "height"}
             >
               <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
                 <View style={styles.modalContent}>
                   <Text style={styles.modalTitle}>Filters</Text>
                   <View style={styles.filterSection}>
-                    <Text style={styles.filterText}>Event categorie :</Text>
+                    <Text style={styles.filterText}>Event Category:</Text>
                     <AllCategoriesEvents
                       onSelectCategory={(categories) =>
-                        setFilters({ ...filters, categories })
+                        setFilters({...filters, categories })
                       }
                     />
                   </View>
                   <View style={styles.buttonsContainer}>
                     <TouchableOpacity
                       onPress={() => {
-                        applyFilters();
-                        toggleModal();
+                        handleApplyFilters();
+                        toggleFilterModal();
                       }}
                       style={styles.submitButton}
                     >
-                      <Text style={styles.submitButtonText}>Toepassen</Text>
+                      <Text style={styles.submitButtonText}>Apply</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       onPress={() => {
-                        clearFilters();
-                        toggleModal();
+                        handleClearFilters();
+                        toggleFilterModal();
                       }}
                       style={styles.clearButton}
                     >
@@ -265,17 +328,17 @@ const AllEventsSection = () => {
         </TouchableWithoutFeedback>
       </Modal>
 
-      {(hasAppliedFilters ? filteredEvents : events).map((event) => (
+      {(hasAppliedFilters? filteredEvents : events).map((event) => (
         <TouchableOpacity
           key={event.id}
           style={styles.eventCard}
-          onPress={() => navigateToEventDetail(event)}
+          onPress={() => navigateToEventDetails(event)}
         >
           <View style={styles.imageContainer}>
             <Image
               source={
                 event.photo
-                  ? {
+                ? {
                       uri: `${SUPABASE_URL}/storage/v1/object/public/${event.photo}`,
                     }
                   : run
@@ -309,9 +372,9 @@ const AllEventsSection = () => {
 
             <TouchableOpacity
               style={styles.likeIcon}
-              onPress={() => toggleLike(event)}
+              onPress={() => toggleEventLike(event)} // Renamed for clarity
             >
-              {likedQuestions.includes(event.id) ? (
+              {likedEvents.includes(event.id)? (
                 <AntDesign name="heart" size={20} color="#213658" />
               ) : (
                 <AntDesign name="hearto" size={20} color="#213658" />
@@ -320,9 +383,9 @@ const AllEventsSection = () => {
 
             <View style={styles.actionsIconsContainer}>
               {event.user_id === userId && (
-                <TouchableOpacity   key={event.id}
-            
-                onPress={() => navigateToEventUpdate(event)}>
+                <TouchableOpacity
+                  key={event.id}
+                  onPress={() => navigateToEventUpdate(event)}>
                   <MaterialCommunityIcons
                     name="pencil"
                     size={22}
@@ -346,7 +409,7 @@ const AllEventsSection = () => {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 40,
+    marginTop: 60,
     flex: 1,
   },
 

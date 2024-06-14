@@ -2,12 +2,7 @@ import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
-  StyleSheet,
-  Image,
-  TouchableOpacity,
-  TextInput,
-  Keyboard,
-  TouchableWithoutFeedback,
+  StyleSheet, ScrollView, Image, TouchableOpacity, TextInput, Keyboard, TouchableWithoutFeedback,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -33,7 +28,7 @@ const EventDetail = ({ route }) => {
   const [eventLocation, setEventLocation] = useState(event.location);
   const [showDatePicker, setShowDatePicker] = useState(true);
   const [showTimePicker, setShowTimePicker] = useState(true);
- 
+  
   useEffect(() => {
     const fetchUsername = async () => {
       try {
@@ -52,10 +47,10 @@ const EventDetail = ({ route }) => {
     const checkUserRegistration = async () => {
       try {
         const { data, error } = await supabase
-          .from("events_joined")
-          .select("*")
-          .eq("user_id", userId)
-          .eq("event_id", event.id);
+        .from("events_joined")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("event_id", event.id);
 
         if (error) throw error;
         if (data.length > 0) {
@@ -76,9 +71,9 @@ const EventDetail = ({ route }) => {
     const fetchAttendeesCount = async () => {
       try {
         const { data, error } = await supabase
-          .from("events_joined")
-          .select("user_id")
-          .eq("event_id", event.id);
+        .from("events_joined")
+        .select("user_id")
+        .eq("event_id", event.id);
 
         if (error) throw error;
         setAttendeesCount(data.length);
@@ -90,50 +85,18 @@ const EventDetail = ({ route }) => {
     fetchAttendeesCount();
   }, [event.id]);
 
-  const handleJoinEvent = async () => {
-    try {
-      if (isJoined) {
-        await supabase
-          .from("events_joined")
-          .delete()
-          .eq("user_id", userId)
-          .eq("event_id", event.id);
-        setIsJoined(false);
-      } else {
-        await supabase
-          .from("events_joined")
-          .insert([{ user_id: userId, event_id: event.id }]);
-        setIsJoined(true);
-      }
-    } catch (error) {
-      console.error("Error handling event registration:", error.message);
-    }
-  };
-
-  const reverseDate = (date) => {
-    const day = ("0" + date.getDate()).slice(-2);
-    const month = ("0" + (date.getMonth() + 1)).slice(-2);
-    const year = date.getFullYear();
-    return `${day}-${month}-${year}`;
-  };
-
-  const formatTime = (date) => {
-    const hours = ("0" + date.getHours()).slice(-2);
-    const minutes = ("0" + date.getMinutes()).slice(-2);
-    return `${hours}u${minutes}`;
-  };
 
   const updateQuestion = async () => {
     const { error } = await supabase
-      .from("events")
-      .update({
+    .from("events")
+    .update({
         name: eventName,
         description: eventDescription,
         date: eventDate.toISOString().split('T')[0],
         start_time: eventStartTime.toTimeString().split(' ')[0],
         location: eventLocation,
       })
-      .eq("id", event.id);
+    .eq("id", event.id);
 
     if (error) {
       console.error("Error updating question:", error);
@@ -146,114 +109,112 @@ const EventDetail = ({ route }) => {
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <View style={styles.container}>
-        <View style={styles.imageContainer}>
-          <Image
-            source={
-              event.photo
+      <ScrollView keyboardShouldPersistTaps='always'>
+        <View style={styles.container}>
+          <View style={styles.imageContainer}>
+            <Image
+              source={
+                event.photo
                 ? { uri: `${SUPABASE_URL}/storage/v1/object/public/${event.photo}` }
-                : run // Default image if photo is not available
-            }
-            style={styles.eventImage}
-          />
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Ionicons name="return-down-back" size={24} color="#3584FC" />
-          </TouchableOpacity>
-        </View>
-        <View style={styles.contentContainer}>
-          <View style={styles.detailsContainer}>
-            <View style={styles.detailHeading}>
-              <View style={styles.detailHeadingContent}>
-                <AntDesign name="edit" size={16} color="#213658" />
-                <Text style={styles.title}>Update Event</Text>
-              </View>
-            </View>
-
-            <View style={styles.updateContentContainer}>
-              <Text style={styles.descriptionHeading}>Naam van het event</Text>
-              <TextInput
-                style={styles.titleUpdate}
-                value={eventName}
-                onChangeText={setEventName}
-                multiline
-              />
-
-              <Text style={styles.descriptionHeading}>Beschrijving van het event</Text>
-              <TextInput
-                style={styles.descriptionUpdate}
-                value={eventDescription}
-                onChangeText={setEventDescription}
-                multiline
-              />
-
-              <Text style={styles.descriptionHeadingDetails}>Details van het event</Text>
-              <View style={styles.detailDescription}>
-                <View style={styles.eventDetail}>
-                  <Ionicons name="calendar" size={20} color="#213658" style={styles.eventDetailIcon} />
-                  {showDatePicker && (
-                    <DateTimePicker
-                      testID="datePicker"
-                      value={eventDate}
-                      mode="date"
-                      display="default"
-                      onChange={(e, selectedDate) => {
-                        setShowDatePicker(true);
-                        if (selectedDate) {
-                          setEventDate(selectedDate);
-                        }
-                      }}
-                    />
-                  )}
-                </View>
-                <View style={styles.eventDetail}>
-                  <Ionicons name="time" size={20} color="#213658" style={styles.eventDetailIcon} />
-                  {/* <Text style={styles.eventDetailText}>{formatTime(eventStartTime)}</Text>
-                  <TouchableOpacity onPress={() => setShowTimePicker(true)}>
-                    <Text style={styles.datePickerButtonText}>Wijzig tijd</Text>
-                  </TouchableOpacity> */}
-                  {showTimePicker && (
-                    <DateTimePicker
-                      testID="timePicker"
-                      value={eventStartTime}
-                      mode="time"
-                      display="default"
-                      onChange={(e, selectedTime) => {
-                        setShowTimePicker(true);
-                        if (selectedTime) {
-                          setEventStartTime(selectedTime);
-                        }
-                      }}
-                    />
-                  )}
-                </View>
-                <View style={styles.eventDetail}>
-                  <Ionicons name="location" size={20} color="#213658" style={styles.eventDetailIcon} />
-                  <TextInput
-                    style={styles.eventDetailText}
-                    value={eventLocation}
-                    onChangeText={setEventLocation}
-                  />
+                  : run // Default image if photo is not available
+              }
+              style={styles.eventImage}
+            />
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
+              <Ionicons name="return-down-back" size={24} color="#3584FC" />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.contentContainer}>
+            <View style={styles.detailsContainer}>
+              <View style={styles.detailHeading}>
+                <View style={styles.detailHeadingContent}>
+                  <AntDesign name="edit" size={16} color="#213658" />
+                  <Text style={styles.title}>Update Event</Text>
                 </View>
               </View>
 
-              <View style={styles.actionsContainer}>
-                {isEditing ? (
-                  <TouchableOpacity style={styles.UpdateBtn} onPress={updateQuestion}>
-                    <Text style={styles.submitButtonText}>Opslaan</Text>
-                  </TouchableOpacity>
-                ) : (
-                  <TouchableOpacity onPress={() => setIsEditing(true)}>
-                    <Text>Bewerken</Text>
-                  </TouchableOpacity>
-                )}
+              <View style={styles.updateContentContainer}>
+                <Text style={styles.descriptionHeading}>Naam van het event</Text>
+                <TextInput
+                  style={styles.titleUpdate}
+                  value={eventName}
+                  onChangeText={setEventName}
+                  multiline
+                />
+
+                <Text style={styles.descriptionHeading}>Beschrijving van het event</Text>
+                <TextInput
+                  style={styles.descriptionUpdate}
+                  value={eventDescription}
+                  onChangeText={setEventDescription}
+                  multiline
+                />
+
+                <Text style={styles.descriptionHeadingDetails}>Details van het event</Text>
+                <View style={styles.detailDescription}>
+                  <View style={styles.eventDetail}>
+                    <Ionicons name="calendar" size={20} color="#213658" style={styles.eventDetailIcon} />
+                    {showDatePicker && (
+                      <DateTimePicker
+                        testID="datePicker"
+                        value={eventDate}
+                        mode="date"
+                        display="default"
+                        onChange={(e, selectedDate) => {
+                          setShowDatePicker(true);
+                          if (selectedDate) {
+                            setEventDate(selectedDate);
+                          }
+                        }}
+                      />
+                    )}
+                  </View>
+                  <View style={styles.eventDetail}>
+                    <Ionicons name="time" size={20} color="#213658" style={styles.eventDetailIcon} />
+                    {showTimePicker && (
+                      <DateTimePicker
+                        testID="timePicker"
+                        value={eventStartTime}
+                        mode="time"
+                        display="default"
+                        onChange={(e, selectedTime) => {
+                          setShowTimePicker(true);
+                          if (selectedTime) {
+                            setEventStartTime(selectedTime);
+                          }
+                        }}
+                      />
+                    )}
+                  </View>
+                  <View style={styles.eventDetail}>
+                    <Ionicons name="location" size={20} color="#213658" style={styles.eventDetailIcon} />
+                    <TextInput
+                      style={styles.eventDetailText}
+                      value={eventLocation}
+                      onChangeText={setEventLocation}
+                    />
+                  </View>
+                </View>
+
+                <View style={styles.actionsContainer}>
+                  {isEditing? (
+                    <TouchableOpacity style={styles.UpdateBtn} onPress={updateQuestion}>
+                      <Text style={styles.submitButtonText}>Opslaan</Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity onPress={() => setIsEditing(true)}>
+                      <Text>Bewerken</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
               </View>
             </View>
           </View>
         </View>
-      </View>
+      </ScrollView>
     </TouchableWithoutFeedback>
   );
 };
