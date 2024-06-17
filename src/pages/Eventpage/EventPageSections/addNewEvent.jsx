@@ -278,6 +278,8 @@ const AddNewEventSection = () => {
                       />
                       {/* Date and Time Picker */}
                       <View style={styles.dateTimePickerContainer}>
+                      <Text style={styles.inputLabel}>Tijdstip</Text>
+                      <View style={styles.pickerContainer}>
                         {showDatePicker && (
                           <DateTimePicker
                             style={styles.dateTimePicker}
@@ -298,6 +300,7 @@ const AddNewEventSection = () => {
                             onChange={onChangeTime}
                           />
                         )}
+                        </View>
                       </View>
                       {/* Next Button */}
                       <CustomButton
@@ -498,8 +501,14 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "400",
   },
-  dateTimePickerContainer: {
+  pickerContainer: {
     flexDirection: "row",
+marginTop: 10,
+    alignItems: "center",
+  },
+
+  dateTimePickerContainer: {
+    flexDirection: "column",
     marginTop: 10,
     marginBottom: 20,
   },

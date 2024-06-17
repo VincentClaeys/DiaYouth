@@ -243,7 +243,7 @@ const AllEventsSection = () => {
                 <View style={styles.modalContent}>
                   <Text style={styles.modalTitle}>Filters</Text>
                   <View style={styles.filterSection}>
-                    <Text style={styles.filterText}>Event Category:</Text>
+                    <Text style={styles.filterText}>Event categorie:</Text>
                     <AllCategoriesEvents
                       onSelectCategory={(categories) =>
                         setFilters({...filters, categories })
@@ -258,7 +258,7 @@ const AllEventsSection = () => {
                       }}
                       style={styles.submitButton}
                     >
-                      <Text style={styles.submitButtonText}>Apply</Text>
+                      <Text style={styles.submitButtonText}>Toevoegen</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       onPress={() => {
