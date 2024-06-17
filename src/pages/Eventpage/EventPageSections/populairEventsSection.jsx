@@ -4,7 +4,7 @@ import run from "../../../../assets/images/run.jpg";
 import { MaterialIcons } from "@expo/vector-icons";
 import { AntDesign, EvilIcons } from "@expo/vector-icons";
 import { supabase } from "../../../utils/supabase";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { SUPABASE_URL } from "@env";
 import { FontAwesome } from "@expo/vector-icons";
 import { Fontisto } from "@expo/vector-icons";
@@ -116,10 +116,14 @@ const PopulairEventsSection = () => {
     fetchEvents();
   };
 
+  
+    
+
   const handleInsertsEvents = (payload) => {
     console.log("Payload received:", payload);
 
     fetchEvents();
+    fetchLikedEvents(userId);
   };
 
   useEffect(() => {

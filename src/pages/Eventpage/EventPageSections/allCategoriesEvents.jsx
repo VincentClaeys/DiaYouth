@@ -10,6 +10,9 @@ const AllCategoriesEvents = ({ onSelectCategory }) => {
     fetchCategories();
   }, []);
 
+
+
+  
   const fetchCategories = async () => {
     try {
       const { data, error } = await supabase

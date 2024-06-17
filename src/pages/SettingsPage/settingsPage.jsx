@@ -23,6 +23,7 @@ export default function SettingsPage({ session }) {
   const navigateToPeptalkSubmissions = () => navigation.navigate("PeptalkSubmissions");
   const navigateToEventSubmissions = () => navigation.navigate("EventSubmissions");
   const navigateToQuestionSubmission = () => navigation.navigate("QuestionSubmissions");
+  const navigateToEventsJoined = () => navigation.navigate("EventJoined");
 
 
   return (
@@ -121,7 +122,20 @@ export default function SettingsPage({ session }) {
               <ListItem.Chevron />
             </ListItem>
           </View>
+          <View style={styles.listItemWrapper}>
+            <Text style={styles.sectionTitle}>Inschrijvingen</Text>
+            <ListItem containerStyle={styles.listItem} onPress={navigateToEventsJoined}>
+            <MaterialIcons name="event" size={24} color="#213658" />
+              <ListItem.Content>
+                <Text style={styles.listItemTitle}>Activiteiten</Text>
+                <Text style={styles.listItemSubtitle}>Bekijk voor welke eventen je bent ingeschreven</Text>
+              </ListItem.Content>
+              <ListItem.Chevron />
+            </ListItem>
+          </View>
         </View>
+
+        
 
         <CustomButton
           title="Uitloggen"

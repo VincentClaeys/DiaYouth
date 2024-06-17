@@ -28,6 +28,7 @@ import FAQDetail from "./pages/Homepage/HomepageSections/FAQDetail";
 import NewUserDetail from "./pages/Homepage/HomepageSections/newUserDetail";
 import EventUpdate from "./pages/Eventpage/EventPageSections/eventUpdate";
 import EventSubmissions from "./pages/SettingsPage/SettingsPageSections/ProfileEvents/eventSubmissions";
+import EventJoined from "./pages/SettingsPage/SettingsPageSections/ProfileEvents/eventJoined";
 
 // Create navigators
 const Stack = createStackNavigator();
@@ -192,6 +193,11 @@ function AppNavigator({ session }) {
       <Stack.Screen
         name="EventDetail"
         component={EventDetail}
+        options={{ headerShown: false }}
+      />
+          <Stack.Screen
+        name="EventJoined"
+        component={EventJoined}
         options={{ headerShown: false }}
       />
       <Stack.Screen
